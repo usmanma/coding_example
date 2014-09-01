@@ -1,0 +1,66 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+{% load rebaseit %}
+{% block sidebar %}
+    <div class="span3 well">
+        <h4>{% if urlname == "imprest_expense_edit" %}edit{% else %}add{% endif %} expense</h4>
+        <hr>
+        {% crispy expense_form %}
+    </div>
+{% endblock %}
+{% block body %}
+<div class="span9">
+    <div class="row-fluid">
+    <h1>imprest</h1>
+    </div>
+    {% if new_expenses %}
+        <div class="row-fluid">
+        <a class="btn btn-info btn-large pull-right" href="{% url imprest.views.generate_report draft_report.id %}">Generate Report</a>
+        <h3>new expenses</h3>
+        <p>{{ draft_report }}</p>
+        </div>
+        <div class="row-fluid" style="margin-top:30px">
+        <table class="table">
+            <tr>
+                <th>ID</th>
+                <th>Item</th>
+                <th>Category</th>
+                <th>Amount</th>
+                <th>Date</th>
+                <th>Employee</th>
+                <th>Options</th>
+            </tr>
+        {% for expense in new_expenses %}
+            <tr>
+                <td>{{ expense.id }}</td>
+                <td>{{ expense.item }}</td>
+                <td>{{ expense.category }}</td>
+                <td>{{ expense.amount }}</td>
+                <td>{{ expense.expense_date }}</td>
+                <td>{{ expense.employee }}</td>
+                <td>
+                    <a class="btn btn-small" href="{% url imprest.views.expense expense.id %}"><i class="icon-edit"></i> Edit</a>
+                    &nbsp;&nbsp;
+                    <a class="btn btn-small btn-danger" href="{% url imprest.views.delete_expense expense.id %}"><i class="icon-trash icon-white"></i> Delete</a>
+                </td>
+            </tr>
+        {% endfor %}
+        </table>
+        </div>
+    {% else %}
+        <div class="hero-unit">
+        <p class="lead">To begin a new report, start adding expenses.</p>
+        </div>
+    {% endif %}
+    {% if reports %}
+    <div class="row-fluid">
+        <h3>Published Reports:</h3>
+    </div>
+    <ul>
+    {% for r in reports %}
+        <li><a href="{% url imprest.views.view_report r.id %}">IR{{ r.rid }} ({{ r }})</a></li>
+    {% endfor %}
+    </ul>
+{% endif %}
+</div>
+{% endblock body %}

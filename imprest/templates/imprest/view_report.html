@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html>{% load currency_format %} {% load key %}
+<head>
+    <title>Expenses Report - IR-{{ report_id }} ({{ report }})</title>
+    <link href="/static/css/bootstrap.min.css" rel="stylesheet">
+    <style type="text/css" media="all">
+    @page {
+		margin: 1cm;
+	}
+    .centreit {
+		text-align: center;
+	}
+    th.money, td.money {
+		text-align: right;
+	}
+    #footer {
+		position: absolute; 
+		bottom: 0;
+	}
+    .break-page {
+		page-break-before: always;
+	}
+    div.donotprint {
+		margin-top: 20px;
+	}
+    .category-group {
+		page-break-inside: avoid;
+	}
+    .no-border td {
+		border:0;
+	}
+    .tb {
+		border-top: 1px solid #dddddd;
+	}
+    .pad-out {
+		height: 10em;
+	}
+    h1,h2,h3,h4,h5,h6 {
+		font-family:inherit;
+	}
+    </style>
+    
+	<style type="text/css" media="print">
+	* {
+		background: transparent !important;
+		box-shadow:none !important;
+		text-shadow: none !important;
+		filter:none !important;
+		-ms-filter: none !important;
+	}
+	div.donotprint {
+		visibility: hidden;
+		margin-top: 0;
+		height: 0;
+	}
+	</style>
+</head>
+<body>
+<div class="container">
+    <div class="row donotprint">
+        <a href="{% url imprest.views.expense %}" class="btn btn-danger">
+            <i class="icon-arrow-left icon-white"></i> Back
+        </a> &nbsp;
+        {% if expenses %}
+            <a onclick="window.print()" class="btn btn-primary btn-large">
+                <i class="icon-print icon-white"></i> Print</a>
+        {% endif %}
+    </div>
+    <div class="row">
+        <div class="span12 centreit page-header"><h1>Mak</h1></div>
+    </div>
+    <div class="row"><div class="span12 pad-out"></div></div>
+    <div class="row">
+        <div class="span6 offset3">
+            <h3>Expenses Report</h3>
+            <h4>Period: {{ report }}</h4>
+            <h4>Ref: IR-{{ report_id }}</h4>
+        </div>
+    </div>
+    <div class="row">
+        <div class="span12 pad-out"></div>
+    </div>
+    <div class="row">
+        <div class="span6 offset3">
+            <h4>Summary</h4>
+            <p>&nbsp;</p>
+            {% if category_totals %}
+                <table class="table table-condensed">
+                    {% for key, value in category_totals.items %}
+                        <tr>
+                            <td><strong>{{ key }}</strong></td>
+                            <td class="money">&pound;{{ value|currency }}</td>
+                        </tr>
+                    {% endfor %}
+                    <tr>
+                        <td><strong>Grand Total</strong></td>
+                        <td class="money"><strong>&pound;{{ total.amount__sum|currency }}</strong></td>
+                    </tr>
+                </table>
+            {% endif %}
+        </div>
+    </div>
+    <div class="row break-page">
+        <div class="span12 centreit page-header">
+            <h3>Mak</h3>
+        </div>
+    </div>
+    <div class="row">
+        <div class="span10 offset1">
+            <h4>Expenses Report - Details</h4>
+            <h5>Period: {{ report }} <span class="pull-right">Ref: IR-{{ report_id }}</span></h5>
+        </div>
+    </div>
+    <div class="row">
+        <div class="span10 offset1 tb">
+            {% if expenses %}
+                {% regroup expenses by category as expenses_list %}
+                {% for expenses in expenses_list %}
+                    <div class="category-group">
+                        <h4>{{ expenses.grouper }}</h4>
+                        <table class="table table-condensed">
+                            <thead>
+                                <tr>
+                                    <th class="span1">ID</th>
+                                    <th class="span2">Date</th>
+                                    <th class="span6">Item</th>
+                                    <th class="span1 money">Amount</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for expense in expenses.list %}
+                                    <tr>
+                                        <td>{{ expense.id}}</td>
+                                        <td>{{ expense.expense_date|date:"d/m/Y" }}</td>
+                                        <td>{{ expense.item }}</td>
+                                        <td class="money">&pound;{{ expense.amount|currency }}</td>
+                                    </tr>
+                                {% endfor %}
+                                <tr>
+                                    <td colspan="3"><strong class="pull-right">Total:</strong></td>
+                                    <td class="money">&pound;{{ category_totals|key:expenses.grouper|currency }}</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                {% endfor %}
+                <h4>Grand Total: &pound;{{ total.amount__sum|currency }}</h4>
+            {% else %}
+                <div class="alert alert-error">
+                    <h4>NO ENTRIES</h4> There are no records for the selected time frame of this report.
+                </div>
+            {% endif %}
+        </div>
+    </div>
+    {% if report.include_summary %}
+        <div class="row break-page">
+            <div class="span10 offset1 page-header">
+                <h4>Mak <span class="pull-right alert-error">INTERNAL COPY</span></h4>
+            </div>
+        </div>
+        <div class="row">
+            <div class="span10">
+                <h4>Expenses Report</h4>
+                <h5>Period: {{ report }} <span class="pull-right">Ref: IR-{{ report_id }}</span></h5>
+            </div>
+        </div>
+        <div class="row">
+            <div class="span10 offset1">
+            {% if expenses %}
+                <table class="table table-condensed">
+                    <thead>
+                        <tr>
+                            <th class="span1">ID</th>
+                            <th class="span1">Date</th>
+                            <th class="span2">Category</th>
+                            <th class="span4">Item</th>
+                            <th class="money span1">Amount</th>
+                            <th class="span1">Employee</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for expense in internal_expenses %}
+                            <tr>
+                                <td>{{ expense.id}}</td>
+                                <td>{{ expense.expense_date|date:"d/m/Y" }}</td>
+                                <td>{{ expense.category }}</td>
+                                <td>{{ expense.item }}{% if expense.notes %} ({{ expense.notes }}){% endif %}</td>
+                                <td class="money span1">&pound;{{ expense.amount|currency }}</td>
+                                <td>{{ expense.employee|capfirst }}</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                <table class="table">
+                    <tbody>
+                        {% for key, value in category_totals.items %}
+                            <tr>
+                                <td><strong>{{ key }}</strong></td>
+                                <td class="money span1">&pound;{{ value|currency }}</td>
+                            </tr>
+                        {% endfor %}
+                        <tr>
+                            <td><strong>Grand Total</strong></td>
+                            <td class="money"><strong>&pound;{{ total.amount__sum|currency }}</strong></td>
+                        </tr>
+                    </tbody>
+                </table>
+                <table class="table pull-right">
+                    <tbody>
+                        {% for employee, value in employee_totals.items %}
+                            <tr>
+                                <td><strong>{{ employee|capfirst }}</strong></td>
+                                <td class="money span1">&pound;{{ value|currency }}</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% else %}
+                    <div class="alert alert-error">
+                        <h4>NO ENTRIES</h4> There are no records for the selected time frame of this report.
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    {% endif %}
+</div>
+
+<script src="//code.jquery.com/jquery-latest.js"></script>
+<script src="/static/js/bootstrap.min.js"></script>
+</body>
+</html>
